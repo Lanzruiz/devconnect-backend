@@ -46,9 +46,46 @@ router.post(
 
 router.get("/", auth, async (req, res) => {
   try {
-    const posts = await Post.find().populate("user", ["name", "avatar"]);
+    const posts = await Post.find().sort({ date: -1 });
     res.json(posts);
-  } catch (error) {
+  } catch (err) {
+    console.error(err.message);
+    res.status(500).send("Server Error");
+  }
+});
+
+// @route   GET api/posts/:post_id
+// @desc    Get post by post_id
+// @access  Private
+
+router.get("/:post_id", auth, async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.post_id);
+
+    if (!post) return res.status(404).json({ mgs: "Post not found" });
+    res.json(post);
+  } catch (err) {
+    console.error(err.message);
+    if (err.kind === "ObjectId")
+      return res.status(404).json({ mgs: "Post not found" });
+    res.status(500).send("Server Error");
+  }
+});
+
+// @route   DELETE api/posts/:post_id
+// @desc    Get post by post_id
+// @access  Private
+
+router.delete("/:post_id", auth, async (req, res) => {
+  try {
+    // @todo - remove users posts
+    // Remove profile
+    await Post.findOneAndDelete({
+      _id: req.params.post_id,
+    });
+
+    res.json({ msg: "Post deleted" });
+  } catch (err) {
     console.error(err.message);
     res.status(500).send("Server Error");
   }
